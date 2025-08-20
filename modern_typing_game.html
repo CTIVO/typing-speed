@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>  CTIVO Typing Speed Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary-bg: #0a0a0a;
+      --secondary-bg: #1a1a1a;
+      --accent-bg: #2a2a2a;
+      --primary-text: #ffffff;
+      --secondary-text: #cccccc;
+      --accent-color: #00ff88;
+      --error-color: #ff4444;
+      --border-radius: 12px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Theme Variables */
+    .theme-neon {
+      --primary-bg: #0d1117;
+      --secondary-bg: #161b22;
+      --accent-bg: #21262d;
+      --accent-color: #00d9ff;
+      --primary-text: #f0f6fc;
+      --secondary-text: #8b949e;
+    }
+
+    .theme-sunset {
+      --primary-bg: #1a0e0a;
+      --secondary-bg: #2a1a14;
+      --accent-bg: #3a241a;
+      --accent-color: #ff6b35;
+      --primary-text: #fff8f0;
+      --secondary-text: #d4b8a0;
+    }
+
+    .theme-forest {
+      --primary-bg: #0a1a0a;
+      --secondary-bg: #142a14;
+      --accent-bg: #1e3a1e;
+      --accent-color: #4ade80;
+      --primary-text: #f0fff0;
+      --secondary-text: #a0d0a0;
+    }
+
+    .theme-ocean {
+      --primary-bg: #0a1520;
+      --secondary-bg: #142030;
+      --accent-bg: #1e2a40;
+      --accent-color: #3b82f6;
+      --primary-text: #f0f8ff;
+      --secondary-text: #94a3b8;
+    }
+
+    body {
+      font-family: 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+      color: var(--primary-text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .title {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(45deg, var(--accent-color), var(--primary-text));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 4px 20px rgba(0, 255, 136, 0.3);
+    }
+
+    .subtitle {
+      color: var(--secondary-text);
+      font-size: 1.2rem;
+      font-weight: 300;
+    }
+
+    .game-container {
+      background: var(--secondary-bg);
+      border-radius: var(--border-radius);
+      padding: 2.5rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent, var(--accent-color), transparent);
+      animation: rotate 10s linear infinite;
+      opacity: 0.1;
+      z-index: -1;
+    }
+
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      background: var(--accent-color);
+      color: var(--primary-bg);
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 0.9rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 255, 136, 0.3);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: var(--accent-bg);
+      color: var(--primary-text);
+    }
+
+    .word-display {
+      font-size: 3.5rem;
+      font-weight: 600;
+      text-align: center;
+      margin: 2rem 0;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      letter-spacing: 0.05em;
+    }
+
+    .word-display.correct {
+      color: var(--accent-color);
+      animation: pulse 0.3s ease-out;
+    }
+
+    .word-display.incorrect {
+      color: var(--error-color);
+      animation: shake 0.3s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .input-container {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 1rem 1.5rem;
+      font-size: 1.4rem;
+      border: 2px solid var(--accent-bg);
+      border-radius: var(--border-radius);
+      background: var(--accent-bg);
+      color: var(--primary-text);
+      outline: none;
+      transition: var(--transition);
+      text-align: center;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.2);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: var(--accent-bg);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-color), var(--primary-text));
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--accent-bg);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      text-align: center;
+      transition: var(--transition);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-color);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--secondary-text);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .theme-selector {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .theme-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .theme-btn:hover, .theme-btn.active {
+      border-color: var(--primary-text);
+      transform: scale(1.1);
+    }
+
+    .theme-dark { background: linear-gradient(135deg, #0a0a0a, #2a2a2a); }
+    .theme-neon { background: linear-gradient(135deg, #0d1117, #00d9ff); }
+    .theme-sunset { background: linear-gradient(135deg, #1a0e0a, #ff6b35); }
+    .theme-forest { background: linear-gradient(135deg, #0a1a0a, #4ade80); }
+    .theme-ocean { background: linear-gradient(135deg, #0a1520, #3b82f6); }
+
+    .combo-display {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .combo-count {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+    }
+
+    .game-over {
+      text-align: center;
+      padding: 2rem;
+      background: var(--accent-bg);
+      border-radius: var(--border-radius);
+      margin-top: 2rem;
+      border: 2px solid var(--accent-color);
+    }
+
+    .final-score {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .title {
+        font-size: 2rem;
+      }
+      
+      .word-display {
+        font-size: 2.5rem;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .sound-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--accent-bg);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      color: var(--primary-text);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .sound-toggle:hover {
+      background: var(--accent-color);
+      color: var(--primary-bg);
+    }
+  </style>
+</head>
+<body class="theme-dark">
+  <button class="sound-toggle" id="soundToggle">🔊</button>
+  
+  <div class="container">
+    <div class="header">
+      <h1 class="title">TypeMaster Pro</h1>
+      <p class="subtitle">Test your typing speed with style |
+        made by CTIVO KARIS 
+      </p>
+    </div>
+
+    <div class="game-container">
+      <div class="controls">
+        <div class="control-group">
+          <button class="btn" id="startBtn">Start Game</button>
+          <button class="btn btn-secondary" id="levelBtn">Easy</button>
+          <button class="btn btn-secondary" id="modeBtn">Words</button>
+        </div>
+        
+        <div class="theme-selector">
+          <div class="theme-btn theme-dark active" data-theme="dark"></div>
+          <div class="theme-btn theme-neon" data-theme="neon"></div>
+          <div class="theme-btn theme-sunset" data-theme="sunset"></div>
+          <div class="theme-btn theme-forest" data-theme="forest"></div>
+          <div class="theme-btn theme-ocean" data-theme="ocean"></div>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+
+      <div class="combo-display">
+        <div class="combo-count" id="comboCount">Combo: 0</div>
+      </div>
+
+      <div class="word-display" id="wordDisplay">Press Start to Begin</div>
+      
+      <div class="input-container">
+        <input type="text" class="input-field" id="inputField" placeholder="Type the word above..." disabled>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="timeValue">0</div>
+          <div class="stat-label">Time (s)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="wpmValue">0</div>
+          <div class="stat-label">WPM</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="accuracyValue">100%</div>
+          <div class="stat-label">Accuracy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="scoreValue">0</div>
+          <div class="stat-label">Score</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    class TypingGame {
+      constructor() {
+        this.levels = {
+          easy: {
+            words: ['apple', 'dog', 'car', 'banana','tree',
+      'cat', 'ball', 'book', 'pen', 'cup', 'sun', 'moon', 'star', 'fish', 'bird',
+      'hat', 'shoe', 'milk', 'egg', 'house', 'bed', 'chair', 'table', 'bag', 'bus',
+      'duck', 'goat', 'pig', 'cow', 'hen', 'rat', 'toy', 'leaf', 'rain', 'cake',
+      'soap', 'box', 'key', 'door', 'bell', 'lamp', 'road', 'bike', 'ship', 'train',
+      'hand', 'leg', 'nose', 'eye', 'ear', 'red', 'blue', 'green', 'black', 'white',
+      'sand', 'rock', 'cup', 'jug', 'balloon', 'kite', 'ring', 'coin', 'stick', 'drum',
+      'jam', 'rice', 'corn', 'salt', 'sugar', 'tea', 'meat', 'jam', 'honey', 'bread',
+      'soap', 'pan', 'net', 'mat', 'fan', 'bell', 'bell', 'clock', 'rope', 'sack',
+      'log', 'cow', 'dog', 'hen', 'ant', 'bee', 'bat', 'owl', 'rat', 'bug', 'cup',
+      'pen', 'tap', 'bus', 'car', 'van', 'jeep', 'ship', 'tram', 'hut', 'tent', 'farm',
+      'rain', 'sun', 'day', 'night', 'wind', 'sky', 'snow', 'ice', 'stone', 'sand',
+      'milk', 'egg', 'oil', 'jam', 'jam', 'mop', 'bin', 'cap', 'bag', 'rug', 'bed',
+      'toy', 'book', 'map', 'road', 'hill', 'pond', 'lake', 'sea', 'wave', 'tree',
+      'root', 'stem', 'leaf', 'seed', 'bud', 'petal', 'fruit', 'farm', 'yard', 'barn'],
+            sentences: ['The quick brown fox jumps.',
+    'I love sunny days.',
+    'Books are wonderful.',
+    'Cats sleep a lot.',
+    'Music makes me happy.',
+    'The cat runs fast',
+    'I like red apples',
+    'Dogs bark at night',
+    'She has a book',
+    'The sun is hot',
+    'We play with toys',
+    'The baby is happy',
+    'I see the moon',
+    'Fish swim in water',
+    'He has a ball'],
+            timeLimit: 60,
+            multiplier: 1
+          },
+          medium: {
+            words: ['banana', 'elephant', 'guitar','imagination', 'mountain',
+      'bridge', 'river', 'school', 'doctor', 'travel', 'forest', 'garden', 'castle',
+      'planet', 'valley', 'camera', 'flower', 'island', 'rocket', 'purple', 'silver',
+      'golden', 'singer', 'driver', 'village', 'window', 'market', 'farmer', 'worker',
+      'hunter', 'sailor', 'dancer', 'leader', 'player', 'pencil', 'painter', 'author',
+      'reader', 'teacher', 'student', 'picture', 'parrot', 'rabbit', 'monkey', 'donkey',
+      'turtle', 'dragon', 'candle', 'button', 'bucket', 'ladder', 'singer', 'farmer',
+      'writer', 'flower', 'planet', 'hunter', 'rocket', 'castle', 'forest', 'school',
+      'doctor', 'lawyer', 'butcher', 'sailor', 'market', 'driver', 'village', 'bridge',
+      'island', 'temple', 'palace', 'station', 'harbor', 'airport', 'candle', 'mirror',
+      'guitar', 'violin', 'trumpet', 'piano', 'flute', 'drummer', 'artist', 'painter',
+      'author', 'reader', 'travel', 'ticket', 'wallet', 'bridge', 'camera', 'garden',
+      'valley', 'window', 'ladder', 'bucket', 'castle', 'silver', 'golden', 'purple',
+      'planet', 'rocket', 'dragon', 'hunter', 'dancer', 'singer', 'market', 'doctor',
+      'teacher', 'student', 'player', 'painter', 'author', 'travel', 'forest', 'planet',
+      'temple', 'palace', 'harbor', 'airport', 'castle', 'planet', 'rocket', 'dragon',
+      'island', 'travel', 'ticket', 'wallet', 'pencil', 'flower', 'bridge', 'village'],
+            sentences: ['The quick brown fox jumps over the lazy dog.',
+    'I love sunny days in the park.',
+    'Books are wonderful for gaining knowledge.',
+    'Cats sleep a lot during the day.',
+    'Music makes me happy and relaxed.',
+    'The cat runs fast across the garden.',
+    'I like red apples and green grapes.',
+    'Dogs bark at night near the street.',
+    'She has a book about ancient history.',
+    'The sun is hot in the summer afternoon.',
+    'We play with toys and have fun.',
+    'The baby is happy when singing.',
+    'I see the moon shining brightly tonight.',
+    'Fish swim in water quietly.',
+    'He has a ball to play with in the yard.',
+    'Birds chirp early in the morning.',
+    'I enjoy walking in the forest.',
+    'The rain falls softly on the roof.',
+    'Children laugh while playing games.',
+    'I drink coffee every morning.',
+    'The mountains look beautiful at sunrise.',
+    'Flowers bloom in the spring season.',
+    'She writes poems in her notebook.',
+    'The river flows calmly through the valley.',
+    'I watch the stars at night.',
+    'He rides his bicycle to school.',
+    'The wind blows strongly by the coast.',
+    'We celebrate birthdays with cake.',
+    'Dogs love to play fetch.',
+    'I listen to music while studying.',
+    'The sky turns orange at sunset.'],
+            timeLimit: 45,
+            multiplier: 1.5
+          },
+          hard: {
+            words: [ 'complicated', 'imagination', 'astonishing', 'philosophy',
+      'metamorphosis', 'hypothesis', 'consequence', 'artificial', 'literature',
+      'parliament', 'encyclopedia', 'contradiction', 'architecture', 'mathematics',
+      'consciousness', 'rhetorical', 'magnificent', 'transparent', 'illumination',
+      'sophisticated', 'transformation', 'civilization', 'investigation', 'experiment',
+      'encyclopedic', 'responsibility', 'interpretation', 'university', 'contradictory',
+      'fundamental', 'extraordinary', 'circumstance', 'composition', 'independence',
+      'government', 'relationship', 'philosopher', 'integration', 'information',
+      'constitution', 'classification', 'psychology', 'neurological', 'articulation',
+      'opportunity', 'concentration', 'unbelievable', 'investigator', 'intelligence',
+      'international', 'institution', 'representation', 'identification', 'imagination',
+      'complication', 'announcement', 'contribution', 'demonstration', 'satisfaction',
+      'sustainability', 'recommendation', 'configuration', 'confrontation', 'manipulation',
+      'responsibility', 'communication', 'authentication', 'determination', 'appreciation',
+      'revolutionary', 'characteristic', 'classification', 'participation', 'organization',
+      'unification', 'sophistication', 'interpretation', 'discrimination', 'conglomeration',
+      'mathematical', 'transcendental', 'jurisdiction', 'pronunciation', 'collaboration',
+      'magnification', 'justification', 'hyperbolic', 'constellation', 'observatory',
+      'differentiation', 'acknowledgment', 'philosophical', 'representation', 'theoretical',
+      'computational', 'investigative', 'geopolitical', 'infrastructure', 'psychological',
+      'epistemology', 'anthropology', 'metaphorical', 'terminology', 'ethnographic',
+      'quantitative', 'argumentative', 'conceptualization', 'legislative', 'hypothetical',
+      'technological', 'fundamentalism', 'standardization', 'interdisciplinary',
+      'philanthropy', 'transfiguration', 'individualistic', 'interpretative'],
+            sentences: ['Despite the heavy rain, the children continued playing in the puddles.',
+    'She meticulously organized all her books by genre and author.',
+    'The old mansion at the end of the street seemed haunted at night.',
+    'I could hear the distant echo of thunder rolling across the mountains.',
+    'Traveling abroad offers a unique perspective on different cultures.',
+    'He struggled to understand the complex equations in his physics textbook.',
+    'The orchestra played a symphony that captivated the entire audience.',
+    'Gardening requires patience, knowledge, and consistent care.',
+    'While walking through the forest, I discovered a hidden waterfall.',
+    'The detective carefully examined the crime scene for subtle clues.',
+    'Advanced technology has drastically changed the way we communicate.',
+    'She was determined to complete the marathon despite the injuries.',
+    'The historical documents revealed secrets about the ancient civilization.',
+    'Astronomers observed a rare alignment of planets in the night sky.',
+    'Cooking elaborate dishes demands precision and creativity.',
+    'The lighthouse guided ships safely through the treacherous waters.',
+    'I spent hours analyzing the complex patterns in the data.',
+    'The philosopher pondered questions about existence and morality.',
+    'A sudden gust of wind scattered the papers across the room.',
+    'The author’s intricate narrative wove multiple storylines seamlessly.',
+    'Exploring caves can be both thrilling and dangerous.',
+    'The negotiation between the two countries required delicate diplomacy.',
+    'His knowledge of classical literature was impressive and extensive.',
+    'They embarked on an expedition to the Arctic to study wildlife.',
+    'The painter used vibrant colors to depict the lively marketplace.',
+    'Despite numerous challenges, the team completed the project on time.',
+    'The scientist conducted experiments to test the new hypothesis.',
+    'Watching the sunrise over the desert was a breathtaking experience.',
+    'The architect designed a building that blended modern and traditional styles.',
+    'She solved the intricate puzzle that had baffled everyone else.',
+    'The novel explored themes of identity, love, and betrayal.',
+    'I carefully documented every step of the complicated procedure.',
+    'Traveling through the dense jungle required both skill and courage.',
+    'The composer spent months perfecting the symphony.',
+    'Observing the behavior of animals in the wild teaches valuable lessons.',
+    'He delivered a speech that inspired the entire community.',
+    'The museum displayed artifacts from ancient civilizations around the world.',
+    'She captured stunning photographs of the city at night.',
+    'The engineer developed a solution to a challenging technical problem.',
+    'During the storm, the captain navigated the ship through rough seas.',
+    'The scientist’s discovery had significant implications for medicine.',
+    'He carefully studied the intricate designs of the cathedral.',
+    'The playwright wrote dialogues that reflected complex human emotions.',
+    'She juggled multiple responsibilities with remarkable efficiency.',
+    'The expedition uncovered fossils that revealed prehistoric life.',
+    'Advanced mathematics is essential for solving real-world problems.',
+    'He recited poetry with passion and precision.',
+    'The documentary provided insight into the lives of remote communities.',
+    'Negotiating international treaties requires skill, patience, and tact.',
+    'The chef experimented with flavors to create a unique dish.',
+    'She meticulously planned every detail of the elaborate event.'],
+            timeLimit: 30,
+            multiplier: 2
+          }
+        };
+
+        this.currentLevel = 'easy';
+        this.currentMode = 'words';
+        this.isPlaying = false;
+        this.startTime = 0;
+        this.currentText = '';
+        this.wordsTyped = 0;
+        this.correctWords = 0;
+        this.totalKeystrokes = 0;
+        this.correctKeystrokes = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.score = 0;
+        this.timeLimit = 60;
+        this.soundEnabled = true;
+
+        this.initializeElements();
+        this.bindEvents();
+        this.initializeAudio();
+      }
+
+      initializeElements() {
+        this.wordDisplay = document.getElementById('wordDisplay');
+        this.inputField = document.getElementById('inputField');
+        this.startBtn = document.getElementById('startBtn');
+        this.levelBtn = document.getElementById('levelBtn');
+        this.modeBtn = document.getElementById('modeBtn');
+        this.timeValue = document.getElementById('timeValue');
+        this.wpmValue = document.getElementById('wpmValue');
+        this.accuracyValue = document.getElementById('accuracyValue');
+        this.scoreValue = document.getElementById('scoreValue');
+        this.comboCount = document.getElementById('comboCount');
+        this.progressFill = document.getElementById('progressFill');
+        this.soundToggle = document.getElementById('soundToggle');
+      }
+
+      initializeAudio() {
+        // Create audio context for sound effects
+        try {
+          this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.log('Audio not supported');
+        }
+      }
+
+      playSound(frequency, duration = 100) {
+        if (!this.soundEnabled || !this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        gainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration / 1000);
+        
+        oscillator.start();
+        oscillator.stop(this.audioContext.currentTime + duration / 1000);
+      }
+
+      bindEvents() {
+        this.startBtn.addEventListener('click', () => this.toggleGame());
+        this.levelBtn.addEventListener('click', () => this.cycleLevel());
+        this.modeBtn.addEventListener('click', () => this.cycleMode());
+        this.inputField.addEventListener('input', (e) => this.handleInput(e));
+        this.inputField.addEventListener('keydown', (e) => this.handleKeydown(e));
+        this.soundToggle.addEventListener('click', () => this.toggleSound());
+
+        // Theme switching
+        document.querySelectorAll('.theme-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => this.switchTheme(e.target.dataset.theme));
+        });
+
+        // Prevent space from triggering buttons
+        document.addEventListener('keydown', (e) => {
+          if (e.code === 'Space' && this.isPlaying) {
+            e.preventDefault();
+          }
+        });
+      }
+
+      switchTheme(theme) {
+        document.body.className = `theme-${theme}`;
+        document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
+      }
+
+      toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        this.soundToggle.textContent = this.soundEnabled ? '🔊' : '🔇';
+      }
+
+      cycleLevel() {
+        const levels = Object.keys(this.levels);
+        const currentIndex = levels.indexOf(this.currentLevel);
+        this.currentLevel = levels[(currentIndex + 1) % levels.length];
+        this.levelBtn.textContent = this.currentLevel.charAt(0).toUpperCase() + this.currentLevel.slice(1);
+        this.timeLimit = this.levels[this.currentLevel].timeLimit;
+      }
+
+      cycleMode() {
+        this.currentMode = this.currentMode === 'words' ? 'sentences' : 'words';
+        this.modeBtn.textContent = this.currentMode.charAt(0).toUpperCase() + this.currentMode.slice(1);
+      }
+
+      toggleGame() {
+        if (!this.isPlaying) {
+          this.startGame();
+        } else {
+          this.endGame();
+        }
+      }
+
+      startGame() {
+        this.isPlaying = true;
+        this.startTime = Date.now();
+        this.wordsTyped = 0;
+        this.correctWords = 0;
+        this.totalKeystrokes = 0;
+        this.correctKeystrokes = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.score = 0;
+        this.timeLimit = this.levels[this.currentLevel].timeLimit;
+
+        this.inputField.disabled = false;
+        this.inputField.focus();
+        this.startBtn.textContent = 'Stop Game';
+        this.startBtn.classList.add('btn-secondary');
+
+        this.generateNewText();
+        this.gameTimer = setInterval(() => this.updateTimer(), 100);
+        this.playSound(440, 150); // Start sound
+      }
+
+      endGame() {
+        this.isPlaying = false;
+        clearInterval(this.gameTimer);
+        
+        this.inputField.disabled = true;
+        this.startBtn.textContent = 'Start Game';
+        this.startBtn.classList.remove('btn-secondary');
+        
+        this.showGameOver();
+        this.playSound(330, 300); // End sound
+      }
+
+      generateNewText() {
+        const textArray = this.levels[this.currentLevel][this.currentMode];
+        this.currentText = textArray[Math.floor(Math.random() * textArray.length)];
+        this.wordDisplay.textContent = this.currentText;
+        this.wordDisplay.classList.remove('correct', 'incorrect');
+      }
+
+      handleKeydown(e) {
+        if (!this.isPlaying) return;
+        
+        // Resume audio context on user interaction
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+          this.audioContext.resume();
+        }
+      }
+
+      handleInput(e) {
+        if (!this.isPlaying) return;
+
+        const typed = e.target.value;
+        this.totalKeystrokes++;
+
+        // Check if word/sentence is complete
+        if (typed === this.currentText) {
+          this.handleCorrectInput();
+          e.target.value = '';
+        } else if (this.currentText.startsWith(typed)) {
+          this.handlePartialCorrect();
+        } else {
+          this.handleIncorrectInput();
+        }
+
+        this.updateStats();
+      }
+
+      handleCorrectInput() {
+        this.correctWords++;
+        this.correctKeystrokes += this.currentText.length;
+        this.combo++;
+        this.maxCombo = Math.max(this.maxCombo, this.combo);
+        
+        // Score calculation with combo multiplier
+        const basePoints = this.currentText.length * this.levels[this.currentLevel].multiplier;
+        const comboBonus = Math.floor(this.combo / 5) * basePoints * 0.5;
+        this.score += basePoints + comboBonus;
+
+        this.wordDisplay.classList.add('correct');
+        this.playSound(523, 100); // Correct sound (C5)
+        
+        this.generateNewText();
+        setTimeout(() => {
+          this.wordDisplay.classList.remove('correct');
+        }, 300);
+      }
+
+      handlePartialCorrect() {
+        this.correctKeystrokes++;
+        this.wordDisplay.classList.remove('incorrect');
+      }
+
+      handleIncorrectInput() {
+        this.combo = 0;
+        this.wordDisplay.classList.add('incorrect');
+        this.playSound(200, 150); // Error sound
+        
+        setTimeout(() => {
+          this.wordDisplay.classList.remove('incorrect');
+        }, 300);
+      }
+
+      updateTimer() {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        const remaining = Math.max(0, this.timeLimit - elapsed);
+        
+        this.timeValue.textContent = Math.ceil(remaining);
+        
+        // Update progress bar
+        const progress = ((this.timeLimit - remaining) / this.timeLimit) * 100;
+        this.progressFill.style.width = `${progress}%`;
+        
+        if (remaining <= 0) {
+          this.endGame();
+        }
+      }
+
+      updateStats() {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        
+        // WPM calculation
+        const wpm = elapsed > 0 ? Math.round((this.correctWords * 60) / elapsed) : 0;
+        this.wpmValue.textContent = wpm;
+
+        // Accuracy calculation
+        const accuracy = this.totalKeystrokes > 0 ? 
+          Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 100;
+        this.accuracyValue.textContent = `${accuracy}%`;
+
+        // Update combo display
+        this.comboCount.textContent = `Combo: ${this.combo}`;
+        
+        // Update score
+        this.scoreValue.textContent = Math.round(this.score);
+      }
+
+      showGameOver() {
+        const elapsed = this.timeLimit;
+        const wpm = Math.round((this.correctWords * 60) / elapsed);
+        const accuracy = this.totalKeystrokes > 0 ? 
+          Math.round((this.correctKeystrokes / this.totalKeystrokes) * 100) : 100;
+
+        // Create game over display
+        const gameOverDiv = document.createElement('div');
+        gameOverDiv.className = 'game-over';
+        gameOverDiv.innerHTML = `
+          <div class="final-score">${Math.round(this.score)} Points</div>
+          <p>Final Results:</p>
+          <p>WPM: ${wpm} | Accuracy: ${accuracy}% | Max Combo: ${this.maxCombo}</p>
+          <p>Words Completed: ${this.correctWords}</p>
+          <button class="btn" onclick="this.parentElement.remove()">Close</button>
+        `;
+
+        document.querySelector('.game-container').appendChild(gameOverDiv);
+      }
+    }
+
+    // Initialize game when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      new TypingGame();
+    });
+  </script>
+</body>
+</html>
